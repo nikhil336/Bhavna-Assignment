@@ -41,19 +41,26 @@ namespace DirectoryTree
         /// <param name="directory">DirectoryInfo object</param>
         internal static void PrintDirectoryTree( DirectoryInfo directory )
         {
-            Console.WriteLine( $"--{directory.Name}" );
-            DirectoryInfo[] directoryInfos = directory.GetDirectories();
-
-            for ( int i = 0; i < directoryInfos.Length; i++ )
+            try
             {
-                PrintDirectoryTree( directoryInfos[i] );
+                Console.WriteLine( $"--{directory.Name}" );
+                DirectoryInfo[] directoryInfos = directory.GetDirectories();
+
+                for ( int i = 0; i < directoryInfos.Length; i++ )
+                {
+                    PrintDirectoryTree( directoryInfos[i] );
+                }
+
+                FileInfo[] fileInfos = directory.GetFiles();
+
+                for ( int i = 0; i < fileInfos.Length; i++ )
+                {
+                    Console.WriteLine( $"-{fileInfos[i].Name}" );
+                }
             }
-
-            FileInfo[] fileInfos = directory.GetFiles();
-
-            for ( int i = 0; i < fileInfos.Length; i++ )
+            catch ( Exception e )
             {
-                Console.WriteLine( $"-{fileInfos[i].Name}" );
+                Console.WriteLine( $"Exception occured while forming directory tree: {e.Message}" );
             }
         }
 

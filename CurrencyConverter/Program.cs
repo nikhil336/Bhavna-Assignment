@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CurrencyConverter
@@ -12,14 +13,14 @@ namespace CurrencyConverter
         static void Main(string[] args)
         {
             GetAppInfo();
-            startCurrencyConvertor();
+            StartCurrencyConvertor();
             Console.ReadLine();
         }
 
         /// <summary>
         /// Method when it runs for the first time it calls AddCurrencies() method and when the method runs for another time then it asks user if want to add new values or not and it also fetchs the currency values for the database and calls the CalculateCurrency method for further process
         /// </summary>
-        internal static void startCurrencyConvertor()
+        internal static void StartCurrencyConvertor()
         {
             List<Currency> currencies = GetCurrenciesFromDatabase();
 
@@ -34,7 +35,7 @@ namespace CurrencyConverter
                 Console.WriteLine( "Do want to add new Conversion rates? (YES/NO)" );
                 if ( Console.ReadLine().ToUpper().Equals( "YES" ) )
                 {
-                    deleteCurrenciesFromDatabase();
+                    DeleteCurrenciesFromDatabase();
                     Console.WriteLine( "Enter Currency names and conversion rates:" );
                     AddCurrencies();
                     currencies = GetCurrenciesFromDatabase();
@@ -50,34 +51,41 @@ namespace CurrencyConverter
         /// <param name="currencies">List<Currency> object</param>
         internal static void CalculateCurrency( List<Currency> currencies )
         {
-            Console.Write( "Enter currency symbol (eg. EURINR): " );
-            string currencySymbol = Console.ReadLine().ToUpper();
-
-            while ( currencySymbol.LastIndexOf( "INR" ) == -1 )
+            try
             {
-                Console.Write("Please enter valid currency symbol (eg. EURINR): ");
-                currencySymbol = Console.ReadLine().ToUpper();
+                Console.Write( "Enter currency symbol (eg. EURINR): " );
+                string currencySymbol = Console.ReadLine().ToUpper();
+
+                while ( currencySymbol.LastIndexOf( "INR" ) == -1 )
+                {
+                    Console.Write( "Please enter valid currency symbol (eg. EURINR): " );
+                    currencySymbol = Console.ReadLine().ToUpper();
+                }
+
+                string currencyName = currencySymbol.Remove( currencySymbol.LastIndexOf( "INR" ) );
+
+                while ( !currencies.Any( c => currencyName.Equals( c.Name ) ) )
+                {
+                    Console.Write( "This Currency is not present please enter another (eg. EURINR): " );
+                    currencySymbol = Console.ReadLine().ToUpper();
+                    currencyName = currencySymbol.Remove( currencySymbol.LastIndexOf( "INR" ) );
+                }
+
+                Console.Write( "Enter Amount: " );
+                double amount;
+
+                while ( !double.TryParse( Console.ReadLine(), out amount ) )
+                {
+                    Console.Write( "Please enter a valid amount: " );
+                }
+
+                Currency currency = currencies.First( c => currencyName.Equals( c.Name ) );
+                Console.WriteLine( $"Amount in INR: { String.Format("{0:0.00}", currency.Rate * amount) }" );
             }
-
-            string currencyName = currencySymbol.Remove( currencySymbol.LastIndexOf( "INR" ) );
-
-            while ( !currencies.Any( c => currencyName.Equals( c.Name ) ) )
+            catch ( Exception e )
             {
-                Console.Write( "This Currency is not present please enter another (eg. EURINR): " );
-                currencySymbol = Console.ReadLine().ToUpper();
-                currencyName = currencySymbol.Remove( currencySymbol.LastIndexOf( "INR" ) );
-            } 
-
-            Console.Write( "Enter Amount: " );
-            double amount;
-
-            while ( !double.TryParse( Console.ReadLine(), out amount ) )
-            {
-                Console.Write( "Please enter a valid amount: " );
+                Console.WriteLine( $"Exception occured while calculating amount: {e.Message}" );
             }
-
-            Currency currency = currencies.First( c => currencyName.Equals( c.Name ) );
-            Console.WriteLine( $"Amount in INR: { String.Format("{0:0.00}", currency.Rate * amount) }" );
         }
 
         /// <summary>
@@ -85,50 +93,65 @@ namespace CurrencyConverter
         /// </summary>
         internal static void AddCurrencies()
         {
-            List<Currency> currencies = new List<Currency>();
-            for ( int i = 0; ; i++ )
+            try
             {
-                Console.Write( "Currency name: " );
-                string name = Console.ReadLine().ToUpper();
+                List<Currency> currencies = new List<Currency>();
 
-                while ( currencies.Any( c => c.Name.Equals(name) ) )
+                for ( int i = 1; ; i++ )
                 {
-                    Console.WriteLine("This Currency already present please enter another!");
-                    Console.Write("Currency name: ");
-                    name = Console.ReadLine();
-                }
+                    Console.Write( "Currency name: " );
+                    string name = Console.ReadLine().ToUpper();
+                    Regex regex = new Regex( "^[a-zA-Z]{2,4}$" );
 
-                currencies.Add( new Currency() { Name = name } );
-                Console.Write( "Conversion rate: " );
-                double rate;
-
-                while ( !Double.TryParse( Console.ReadLine(), out rate ) )
-                {
-                    Console.WriteLine( "Enter valid rate" );
-                }
-
-                AddCurrencyIntoDatabase( name, rate );
-
-                if ( i > 5 )
-                {
-                    Console.WriteLine( "Do you want to add more currencies? (YES/NO)" );
-                    string ans = Console.ReadLine();
-                    if ( ans.ToUpper().Equals( "YES" ) )
+                    while ( !regex.IsMatch( name ) )
                     {
-                        continue;
+                        Console.Write( "Please enter valid currency name (eg. EUR): " );
+                        name = Console.ReadLine().ToUpper();
                     }
-                    else
+
+                    while ( currencies.Any( c => c.Name.Equals( name ) ) )
                     {
-                        break;
+                        Console.WriteLine( "This Currency already present please enter another!" );
+                        Console.Write( "Currency name: " );
+                        name = Console.ReadLine();
+                    }
+
+                    currencies.Add( new Currency() { Name = name } );
+                    Console.Write( "Conversion rate: " );
+                    double rate;
+
+                    while ( !Double.TryParse( Console.ReadLine(), out rate ) )
+                    {
+                        Console.WriteLine( "Enter valid rate" );
+                    }
+
+                    AddCurrencyIntoDatabase( name, rate );
+
+                    if ( i >= 5 )
+                    {
+                        Console.WriteLine( "Do you want to add more currencies? (YES/NO)" );
+                        string ans = Console.ReadLine();
+                        if ( ans.ToUpper().Equals( "YES" ) )
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
+            }
+            catch ( Exception e )
+            {
+                Console.WriteLine( $"Exception occured while adding currency: {e.Message}" );
             }
         }
 
         /// <summary>
         /// Method empties the currency table when it is called
         /// </summary>
-        internal static void deleteCurrenciesFromDatabase()
+        internal static void DeleteCurrenciesFromDatabase()
         {
             SqlConnection sqlConnection = null;
             try
@@ -192,8 +215,8 @@ namespace CurrencyConverter
                 while ( sqlDataReader.Read() )
                 {
                     Currency currency = new Currency();
-                    currency.Name = sqlDataReader["name"].ToString();
-                    currency.Rate = Double.Parse( sqlDataReader["rate"].ToString() );
+                    currency.Name = sqlDataReader[ "name" ].ToString();
+                    currency.Rate = Double.Parse( sqlDataReader[ "rate" ].ToString() );
                     currencies.Add( currency );
                 }
             }

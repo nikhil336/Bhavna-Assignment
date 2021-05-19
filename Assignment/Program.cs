@@ -59,7 +59,16 @@ namespace Assignment
 
             while ( !( DateTime.TryParse( Console.ReadLine(), out fromDateObject ) && fromDateObject < DateTime.Today ) )
             {
-                Console.Write( "Please Enter valid date! \nFrom Date: " );
+                if ( !(fromDateObject < DateTime.Today) )
+                {
+                    Console.WriteLine("The FROM date should be less than today's date");
+                }
+                else
+                {
+                    Console.WriteLine( "Please Enter valid date!" );
+                }
+
+                Console.Write( "From Date: " );
             }
 
             return fromDateObject;
@@ -76,7 +85,16 @@ namespace Assignment
 
             while ( !( DateTime.TryParse( Console.ReadLine(), out toDateObject ) && toDateObject >= fromDateObject ) )
             {
-                Console.Write( "Please Enter valid date! \nTo Date: " );
+                if ( toDateObject != new DateTime() && !(toDateObject >= fromDateObject) )
+                {
+                    Console.WriteLine( "The TO date should be greater than or equal to FROM date" );
+                }
+                else
+                {
+                    Console.WriteLine( "Please Enter valid date!" );
+                }
+
+                Console.Write( "To Date: " );
             }
 
             return toDateObject;

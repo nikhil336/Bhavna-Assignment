@@ -38,10 +38,10 @@ namespace BufferDataStructure
                 }
                 else
                 {
-                    Console.WriteLine( "List is full do you want to remove an old value? (YES/NO)" );
+                    Console.WriteLine( $"List is full do you want to remove an old value to add {value}? (YES/NO)" );
                     if( Console.ReadLine().ToUpper().Equals( "YES" ) )
                     {
-                        if ( i == 9 )
+                        if ( i == 10 )
                         {
                             i = 0;
                         }
@@ -80,7 +80,7 @@ namespace BufferDataStructure
         /// </summary>
         internal static void GetAppInfo()
         {
-            string appName = "Buffered Data Structure";
+            string appName = "List of 10 values";
             string appVersion = "1.0.0";
             string author = "Nikhil Rana";
             Console.ForegroundColor = ConsoleColor.Green;
